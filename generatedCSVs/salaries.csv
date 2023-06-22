@@ -1,0 +1,33 @@
+location,avgLow,avgHigh,avgRating,numOfPosts
+"San Jose, CA",79.42,138.29,4.14,38
+"Santa Clara, CA",76.18,133.09,3.98,22
+"Sunnyvale, CA",75.0,130.56,3.81,16
+"San Francisco, CA",72.52,126.03,3.98,119
+"Burbank, CA",69.24,92.71,3.81,17
+"Chicago, IL",68.51,88.95,3.65,130
+"San Mateo, CA",67.89,114.22,3.74,18
+"Mountain View, CA",65.53,115.07,3.95,15
+"San Diego, CA",64.87,118.05,3.83,62
+"Denver, CO",57.47,86.09,3.73,47
+"El Segundo, CA",54.47,82.21,3.53,19
+"New York, NY",53.57,88.9,3.72,310
+"Jersey City, NJ",53.33,88.0,3.61,33
+"Los Angeles, CA",51.19,84.08,3.87,80
+"Charlotte, NC",51.18,85.17,3.78,78
+"San Antonio, TX",49.8,75.47,3.63,45
+"Houston, TX",48.38,75.99,3.66,72
+"Phoenix, AZ",48.34,96.97,3.76,35
+"Scottsdale, AZ",47.0,92.93,3.65,15
+"Tempe, AZ",46.74,92.97,3.41,31
+"Norfolk, VA",46.33,92.89,3.13,18
+"Philadelphia, PA",45.59,79.23,3.6,56
+"Seattle, WA",45.0,84.0,3.98,30
+"Fort Worth, TX",44.81,77.88,3.89,16
+"Austin, TX",43.31,74.1,3.55,81
+"Jacksonville, FL",40.0,72.0,3.99,19
+"Plano, TX",39.93,75.43,3.61,28
+"Irving, TX",39.62,74.97,3.75,29
+"Dallas, TX",34.8,66.35,3.7,66
+"Indianapolis, IN",34.0,61.0,3.81,17
+"Columbus, OH",31.72,59.03,3.81,29
+"Salt Lake City, UT",26.68,48.64,3.91,22

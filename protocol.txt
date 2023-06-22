@@ -1,0 +1,260 @@
+1)Loading Data
+--commands used:
+understandable from create_db.sql, just one CREATE TABLE jobs(...) 
+
+--related files :
+DataAnalyst.csv
+create_db.sql
+
+-output files:
+analyst.db
+
+--overal work:
+create databes usin SQL and store data from DataAnalyst.csv
+
+
+2) Cleaning Data using SQL
+--commands used:
+cursorWrite.execute("ALTER TABLE jobs ADD low INT;")
+cursorWrite.execute("ALTER TABLE jobs ADD high INT;")
+
+cursorWrite.execute("""UPDATE jobs
+                        SET
+                        title = ?,
+                        salary = ?,
+                        description = ?,
+                        rating = ?,
+                        company = ?,
+                        location = ?,
+                        headquarters = ?,
+                        size = ?,
+                        founded = ?,
+                        ownership = ?,
+                        industry = ?,
+                        sector =?,
+                        revenue = ?,
+                        competitors = ?,
+                        easyApply =?
+                        WHERE id =?;""", tuple(newRow))
+cursorWrite.execute(""" UPDATE jobs
+                            SET
+                            low = ?,
+                            high = ?
+                            WHERE id = ?;""",(low, high, row[0]) )
+
+cursorRead.execute("SELECT count(id) FROM jobs WHERE " + col + " IS NULL;")
+
+--related files
+cleanData.py
+
+--overal work:
+replace values -1, '-1','Unknown' with NULL
+for further analysis add columns low, high and fill them with appropriate values from column salary
+print missing values in dataset
+
+3.1)Simple Observation:
+--commands used:
+SELECT sector,count() AS sector_count FROM jobs WHERE sector IS NOT NULL GROUP BY sector ORDER BY sector_count DESC LIMIT 20;
+
+SELECT sector,COUNT() AS postPerComp
+                FROM jobs
+                WHERE sector is not null
+                AND company is not null
+                GROUP BY company,sector;
+SELECT location,COUNT() AS c, AVG(low) AS avgLow, AVG(high) ,AVG(rating) FROM jobs  GROUP BY location HAVING c >= 15 ORDER BY avgLow DESC;
+
+cursorWrite.execute("""CREATE TABLE postsPerSectors(
+                                sector TEXT,
+                                avgPosts FLOAT
+                                );"""
+				)
+cursorWrite.execute("""CREATE TABLE salaries(
+                               location TEXT,
+                               avgLow FLOAT,
+                               avgHigh FLOAT,
+                               avgRating FLOAT,
+                               numOfPosts INT);"""
+                                           )
+ cursorWrite.execute("""INSERT INTO postsPerSectors VALUES (?,?);""",(sector,avg))
+cursorWrite.execute("""INSERT INTO salaries VALUES (?,?,?,?,?);""",(loc,l,h,rt,row[1]))
+
+--related files:
+observationSQL.py
+
+--overal work:
+print 20 sectors, which contains most of offers
+print average number of offers of each company per sector, using also some python features eg. dictionaries
+print locations , low mean salary, low high salary
+make 2 new tables postsPerSector and salaries, store results
+
+3.2) Generate CSVs
+--commands used:
+writeRow.append("\"" + str(r.replace("\"","")) + "\"")
+
+--related files:
+toCSV.py
+generatedCSVs
+
+-output files:
+jobs.csv  
+postsPerSectors.csv  
+salaries.csv
+
+--overal work:
+generate .csv file for every table in database so we can load data in Rstudio
+
+4)Analysis in R
+--commands used:
+perSector <-read.csv("postsPerSectors.csv",header = TRUE)
+ggplot(perSector, aes( x=factor(sector,level = rev(perSector$sector)) , y = avgPosts)) + geom_bar(stat = 'identity', fill="steelblue") + theme(panel.background = element_blank()) + labs(x = "sector",title = "Avreage number of posts of each company per sector") + coord_flip()
+
+ggplot(salaries,aes(x = avgLow, y =  factor(location,level = rev(salaries$location)))) + geom_point() + geom_point(aes(x = avgHigh, y =  factor(location,level = rev(salaries$location))),color = "red")+ theme(panel.grid.minor = element_blank(),axis.title.y=element_blank()) + scale_x_continuous( limits=c(25,140),breaks = seq(25,140,25)) + labs(x = "mean Low salary (black)   mean High salary(red)", title = " Average mean salary for location")
+
+salOrder <- salaries[order(salaries$avgRating, decreasing = TRUE),]
+ggplot(salOrder,aes(y = avgHigh, x =  factor(location,level = rev(salOrder$location)))) + geom_bar(stat="identity", fill = "steelblue") + labs(x = "mean Low salary (black)   mean High salary(red)", title = " Average High salary for location ordered by average rating") + coord_flip() +  theme(panel.background = element_blank(), axis.title.y = element_blank(), axis.title.x = element_blank())
+
+jobs[jobs == "None"] = NaN
+df2 <- jobs[!is.na(jobs$founded) & !is.na(jobs$high) & !is.na(jobs$rating) & !is.na(jobs$size),]
+df2$founded <- as.numeric(as.character(df2$founded))
+df2$rating <- as.numeric(as.character(df2$rating))
+df2$high <- as.numeric(as.character(df2$high))
+df2$size <- as.numeric(as.character(df2$size))
+
+ ggplot(df2,aes(x = founded, y = high, color = rating))+ geom_point()+ scale_color_gradient(low = "white", high = "blue") +  theme(panel.background = element_blank(), axis.title.x = element_blank(),axis.title.y = element_blank()) + labs(title = "Offers of high salary over year of foundation")
+
+ggplot(df2,aes(x = founded, y = high, color = rating))+ geom_point()+ facet_wrap(~size, ncol = 3)+ scale_color_gradient(low = "white", high = "blue") +  theme(panel.background = element_blank(), axis.title.x = element_blank(),axis.title.y = element_blank()) + labs(title = "Offers of high salary over year of foundation grouped by company size")
+
+
+cor.test(df2$founded, df2$size)
+
+-for every ggplot object stored in some vriable:
+png("appropriateName")
+variable
+dev.off()
+
+
+--related files:
+plots 
+foundedOverHigh.png              
+salariesByLow.png
+foundedOverHighWrappedBySize.png  
+salariesByRating.png
+perSector.png
+
+--overal work:
+plot graphs for data from previous section
+plot graphs related to analysis of rank and salaries, number of employee...
+correlation founded over year of foundation
+
+5)Text processing and Clustring
+--commands used:
+import numpy as np
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.cluster import KMeans
+
+normalizer = vec.build_analyzer()
+normalizedText = []
+
+for row in cursorRead:
+    normalizedText.append(' '.join(normalizer(row[0])))
+
+t= vec.fit_transform(normalizedText).toarray()
+
+sumArr = np.sum(t,axis = 0)
+cursorWrite.execute("INSERT INTO requiredTools VALUES (?,?);""",(key,int(requirementTools[key])))
+cursorWrite.execute("INSERT INTO requiredAtributes VALUES (?,?);""",(key,int(requiredAtributes[key])))
+
+vectorizer2 = TfidfVectorizer(stop_words = 'english', max_features = 1000)
+fittedText = vectorizer2.fit_transform(normalizedText)
+
+fNames2 = vectorizer2.get_feature_names()
+
+kmeans = KMeans(n_clusters = 3, n_init = 20)
+kmeans.fit(fittedText)
+common_words = kmeans.cluster_centers_.argsort()[:,-1:-50:-1]
+
+wc = WordCloud(background_color= "white", max_words=50)
+    wc.generate_from_frequencies(frequencies)
+    fig, ax = plt.subplots()
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    ax.set(title='Cluster ' + str(i))
+    fig.savefig("cluster" + str(i) + ".png")
+
+--related files:
+Vectorizer
+getRequirements.py
+
+--overal work:
+count number of occurences of elements in dictionaries for atributes, tools and education after normalizing and vectorizing text
+make 2 new tables and store result so we can use prepared data in flask
+make 3 clusters using dfidf Vectorizer and k-means.
+store .png images of 3 clusters
+
+6)Display results in Flask
+--commands used:
+salaries = getSalaries()
+    perSector = getPostsperSector()
+    tools = sorted(getRequiredTools(),key = lambda x : x[1],reverse = True)
+    atributes = sorted(getRequiredAtributes(),key = lambda x : x[1],reverse = True)
+    return render_template('main.html', salaries = salaries, perSector = perSector, tools = tools, atributes = atributes)
+
+function drawChart() {
+      var data1 = google.visualization.arrayToDataTable([
+        ["tool", "count",],
+              {% for tool in tools %}
+                        ['{{tool[0]}}', {{tool[1]}}],
+              {% endfor %}
+      ]);
+      var data2 = google.visualization.arrayToDataTable([
+        ["atribute", "count",],
+              {% for elem in atributes %}
+                        ['{{elem[0]}}', {{elem[1]}}],
+              {% endfor %}
+      ]);
+      var data3 = google.visualization.arrayToDataTable([
+        ["degree", "count",],
+        ["master",788],
+        ["bachelor",1148]
+      ]);
+
+var chart1 = new google.visualization.BarChart(document.getElementById("requiredTools"));
+var chart2 = new google.visualization.BarChart(document.getElementById("requiredAtributes"));
+var chart3 = new google.visualization.BarChart(document.getElementById("requiredEducation"));
+
+<img src={{url_for('static', filename="foundedOverHighWrappedBySize.png") }} ,alt="wrap">
+
+--related files:
+simple_flask 
+static (for images)
+templates
+main.py
+
+--overal work:
+display on main.html results of analysis in sql
+display graphs generated in previous parts
+plot required tools, tributes and education as Bar Chart using javascript.
+
+7) Additional cmd output, which can not be displayed in bash using R script
+correlation founded over salary:
+        Pearson's product-moment correlation
+
+data:  df2$founded and df2$high
+t = 3.8772, df = 1570, p-value = 0.00011
+alternative hypothesis: true correlation is not equal to 0
+95 percent confidence interval:
+ 0.04817753 0.14612290
+sample estimates:
+       cor
+0.09738601
+
+8) mostly used websites hor help:
+https://www.w3schools.com/sql/sql_having.asp
+https://www.kaggle.com/code/aybukehamideak/clustering-text-documents-using-k-means
+https://www.kaggle.com/code/thebrownviking20/k-means-clustering-of-1-million-headlines
+https://ggplot2.tidyverse.org/
+
+

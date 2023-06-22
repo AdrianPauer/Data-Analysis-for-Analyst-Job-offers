@@ -1,0 +1,129 @@
+<!doctype html>
+<html>
+<head>
+  <title>Main</title>
+  <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js">  </script>
+
+  <script type="text/javascript">
+    google.charts.load("current", {packages:["corechart"]});
+    google.charts.setOnLoadCallback(drawChart);
+    function drawChart() {
+      var data1 = google.visualization.arrayToDataTable([
+        ["tool", "count",],
+	      {% for tool in tools %}
+	      		['{{tool[0]}}', {{tool[1]}}],
+	      {% endfor %}
+      ]);
+      var data2 = google.visualization.arrayToDataTable([
+        ["atribute", "count",],
+              {% for elem in atributes %}
+                        ['{{elem[0]}}', {{elem[1]}}],
+              {% endfor %}
+      ]);
+      var data3 = google.visualization.arrayToDataTable([
+        ["degree", "count",],
+        ["master",788],
+	["bachelor",1148]
+      ]);
+
+	
+      var options1 = {
+        title: "RequiredTools",
+        bar: {groupWidth: "60%"},
+        legend: { position: "none" },
+      };
+      var options2 = {
+        title: "RequiredAtributes",
+        bar: {groupWidth: "60%"},
+        legend: { position: "none" },
+      };
+      var options3 = {
+        title: "RequiredEducation",
+        bar: {groupWidth: "60%"},
+        legend: { position: "none" },
+      };
+
+
+      var chart1 = new google.visualization.BarChart(document.getElementById("requiredTools"));
+      var chart2 = new google.visualization.BarChart(document.getElementById("requiredAtributes"));
+      var chart3 = new google.visualization.BarChart(document.getElementById("requiredEducation"));
+
+
+	chart1.draw(data1, options1);
+	chart2.draw(data2, options2);
+	chart3.draw(data3, options3)
+  }
+  </script>
+
+</head>
+<body>
+  <h1>Data analysis for analyst job offers</h1>
+  <p><a href = "https://www.kaggle.com/datasets/andrewmvd/data-analyst-jobs">Dataset</a></p>
+  <h3>Missing values after replacing -1, '-1', 'Unknown' to Null </h3>
+  <p>
+  <b><em>column number_of_missing_values percentge </em></b></br>	
+  	title 0  0.0%       </br>
+	salary 1  0.04%		</br>
+	description 0  0.0%	</br>
+	rating 272  12.07%	</br>
+	company 0  0.0%		</br>
+	location 0  0.0%	</br>
+	headquarters 172  7.63%	</br>
+	size 163  7.23%		</br>
+	founded 660  29.29%	</br>
+	ownership 163  7.23%	</br>
+	industry 353  15.67%	</br>	
+	sector 353  15.67%	</br>
+	competitors 1732  76.88%</br>
+	revenue 163  7.23%	</br>
+	easyApply 2173  96.45%	</br>
+  </p>
+  <h2>1.Observation with SQL</h2>
+  <h3>Average Low and High salary in locations</h3>
+  <p>
+  <b><em>location  average_Low_salary average_High_salary </em></b></br>
+  {% for salaryRecord in salaries %}
+  {{salaryRecord}}</br>
+  {% endfor %}
+  </p>
+
+  <h3>Number of offers per company in sectors </h3>
+  <p>
+  <b><em>sector average_number_of_offers </em></b></br>
+  {% for record in perSector %}
+  {{record}}</br>
+  {% endfor %}
+  </p>
+
+  <h2>2.Analysis in Rstudio<h2>
+  <h3> Plots from part 1 <h3>
+  <img src={{url_for('static', filename="salariesByLow.png") }} ,alt="byLow">
+  <img src={{url_for('static', filename="perSector.png") }} ,alt="perSector">
+
+  <h3>Analysis of salary and year of foundation </h3>
+   <img src={{url_for('static', filename="salariesByRating.png") }} ,alt="byrat">
+   <img src={{url_for('static', filename="foundedOverHigh.png") }} ,alt="foundedOverHigh">
+   <img src={{url_for('static', filename="foundedOverHighWrappedBySize.png") }} ,alt="wrap">
+   <p>
+
+	correlation founded over salary:         </br>
+	Pearson's product-moment correlation   </br> 
+	t = 3.8772, df = 1570, p-value = 0.00011  </br>  
+	alternative hypothesis: true correlation is not equal to 0  </br> 
+	95 percent confidence interval: 0.04817753 0.14612290   </br>
+	sample estimates: cor  	0.09738601 </br>
+	conclusion :  no correlation beetween these two variables, small p-value </br>
+   </p>
+
+
+   <h2>3.Text processing and clustering</h2>
+   <div id="requiredTools" style="width: 900px; height: 300px;"></div>
+   <div id="requiredAtributes" style="width: 900px; height: 400px;"></div>
+   <div id="requiredEducation" style="width: 900px; height: 300px;"></div>
+   <img src={{url_for('static', filename="cluster0.png") }} ,alt="cluster0">
+   <img src={{url_for('static', filename="cluster1.png") }} ,alt="clluster1">
+   <img src={{url_for('static', filename="cluster2.png") }} ,alt="cluser2">
+
+
+</body>
+</html>
